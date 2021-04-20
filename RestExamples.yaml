@@ -1,5 +1,5 @@
 ---
-- name: ENSURE APPLICATION CONFIGURATION EXISTS
+- name: Various mso_rest and register examples
   hosts: mso
   connection: local
   gather_facts: False
