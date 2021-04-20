@@ -2,7 +2,9 @@
 - name: ENSURE APPLICATION CONFIGURATION EXISTS
   hosts: mso
   connection: local
-  gather_facts: False
+  gather_facts: no
+  vars:
+    schema_state: present
 
   tasks:
     - name: Get Tenant ID for cpaggen-ansible-schema
@@ -19,21 +21,6 @@
       #msg:  "{{ query_result.imdata[0].configSnapshot.attributes.name }}"
         msg:  "{{ result_tenant.current.id }}"
 
-#     - name: Add New schema
-#       mso_schema:
-#         host: "{{ ansible_host }}"
-#         username: "{{ mso_username }}"
-#         password: "{{ mso_password }}"
-#         validate_certs: False
-#         schema: "cpaggen-ansible-schema"
-#         state: present
-#         templates:
-#         - name: "Template1"
-#           displayName: "My First Template"
-#           tenantId: "{{result_tenant.current.id}}"
-#       tags:
-#         addSchema
-
     - name: Add schema
       mso_schema_template:
         host: "{{ ansible_host }}"
@@ -43,7 +30,7 @@
         tenant: "cpaggen-ansible"
         schema: "cpaggen-ansible-schema"
         template: "Template1"
-        state: present 
+        state: "{{ schema_state }}"
       tags:
         addSchema
 
@@ -54,7 +41,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         vrf: "VRF1"
       tags:
@@ -71,7 +58,7 @@
         l3out: "L3out1"
         vrf:
          name: "VRF1"
-        state: present
+        state: "{{ schema_state }}"
       tags:
         l3out
 
@@ -82,7 +69,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         bd: "{{ item.bd }}"
         intersite_bum_traffic: "yes"
@@ -103,7 +90,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         bd: "{{ item.bd }}"
         subnet: "{{ item.subnet }}"
@@ -121,7 +108,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         anp: "{{item.anp}}"
       loop:
@@ -137,7 +124,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         anp: "{{ item.anp }}"
         epg: "{{ item.epg }}"
@@ -160,7 +147,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         site: "{{ item.site }}"
       loop:
@@ -178,7 +165,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         site: "Fab3"
         vrf: "VRF1"
@@ -192,7 +179,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         site: "Fab3"
         bd: "{{ item.bd }}"
@@ -245,7 +232,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         site: "Fab3"
         anp: "{{ item.anp }}"
@@ -262,7 +249,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         site: "Fab3"
         anp: "{{ item.anp }}"
@@ -294,7 +281,7 @@
         password: "{{ mso_password }}"
         validate_certs: False
         schema: "cpaggen-ansible-schema"
-        state: present
+        state: "{{ schema_state }}"
         template: "Template1"
         site: "Fab3"
         anp: "{{ item.anp }}"
