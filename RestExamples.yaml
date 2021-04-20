@@ -1,0 +1,109 @@
+---
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: mso
+  connection: local
+  gather_facts: False
+
+  vars:
+    mso_creds: &mso_creds
+      host: "{{ ansible_host }}"
+      username: "{{ mso_username }}"
+      password: "{{ mso_password }}"
+      validate_certs: False
+
+  tasks:
+    - name: Get Tenant ID for cpaggen-ansible
+      cisco.mso.mso_tenant:
+        <<: *mso_creds
+        tenant: "cpaggen-ansible"
+        state: query
+      register: result_tenant
+
+    - debug:
+        msg:  "{{ result_tenant.current.id }}"
+
+    - name: Get Site ID for Fab1
+      cisco.mso.mso_site:
+        <<: *mso_creds
+        site: Fab1
+        apic_username: "{{ apic_username }}"
+        apic_password: "{{ apic_password }}"
+        apic_site_id: 100
+        state: query
+      register: result_site
+    
+    - debug:
+        msg:  "{{ result_site.current.id }}"
+ 
+    - name: Get Schema ID for cpaggen-ansible-schema
+      cisco.mso.mso_schema:
+        <<: *mso_creds
+        schema: "cpaggen-ansible-schema"
+        state: query
+      register: result_schema
+    
+    - debug:
+        msg:  "{{ result_schema.current.id }}"
+
+    - name: MSO modules use PATCH behind the scenes demo
+      cisco.mso.mso_schema_template_bd_subnet:
+       <<: *mso_creds
+       template: "Template1"
+       schema: "cpaggen-ansible-schema"
+       bd: "BD1"
+       subnet: "10.10.10.1/24"
+       state: present
+      tags:
+       PATCH
+       
+  
+    - name: Get BD1 subnet URL in Template1
+      cisco.mso.mso_schema_template:
+        <<: *mso_creds
+        tenant: "cpaggen-ansible"
+        template: "Template1"
+        schema: "cpaggen-ansible-schema"
+        state: query
+      register: result_template
+
+    - debug:
+        msg:  "{{ result_template.current.bds[0].bdRef }}"
+
+    - name: mso_rest example using bdRef
+      cisco.mso.mso_rest:
+        <<: *mso_creds
+        path: /mso/api/v1/{{result_template.current.bds[0].bdRef}}
+        method: get
+      register: rest_result
+  
+    - debug:
+        msg: "{{ rest_result }}"
+
+    - name: Patch schema to add AP2
+      cisco.mso.mso_rest:
+        <<: *mso_creds
+        path: /mso/api/v1/schemas/{{ result_schema.current.id }}
+        method: patch
+        content:
+          - op: add
+            path: /templates/Template1/anps/-
+            value:
+              name: AP2
+              displayName: Please_delete_me
+              epgs: []
+            _updateVersion: 0
+
+    - name: Check the UI for new AP named AP2
+      pause:
+        prompt: "Please check the MSO UI then press return to continue"
+
+    - name: Patch schema to delete AP2
+      cisco.mso.mso_rest:
+        <<: *mso_creds
+        path: /mso/api/v1/schemas/{{ result_schema.current.id }}
+        method: patch
+        content:
+          - op: remove
+            path: /templates/Template1/anps/AP2
+
+
