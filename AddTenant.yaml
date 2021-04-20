@@ -1,0 +1,48 @@
+---
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: mso
+  connection: local
+  gather_facts: False
+  vars:
+    tenant_state: present
+
+  tasks:
+    - name: list tenants
+      mso_tenant:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        state: query
+      tags:
+        list
+
+    - name: Add New tenant
+      mso_tenant:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        tenant: cpaggen-ansible
+        display_name: Ansible Tenant
+        description: This tenant has been created with ansible
+        state: "{{ tenant_state }}"
+      tags:
+        add
+
+    - name: Associate to sites
+      mso_tenant:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        tenant: cpaggen-ansible
+        display_name: Ansible Tenant
+        description: This tenant has been created with ansible
+        sites:
+         - "Fab1"
+         - "Fab2"
+         - "Fab3"
+        state: "{{ tenant_state }}"
+      tags:
+        addsite

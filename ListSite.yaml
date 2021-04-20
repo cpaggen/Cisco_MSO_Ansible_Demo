@@ -1,0 +1,35 @@
+---
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: mso
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Get Tenant ID 
+      mso_tenant:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        tenant: "cpaggen-ansible"
+        state: query
+      register: result_tenant
+
+    - debug:
+      #msg:  "{{ query_result.imdata[0].configSnapshot.attributes.name }}"
+        msg:  "{{ result_tenant.current.id }}"
+
+    - name: Add New schema
+      mso_schema:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible"
+        state: present
+        templates:
+        - name: "Template1"
+          displayName: "My First Ansible Template"
+          tenantId: "{{result_tenant.current.id}}"
+      tags:
+        addSchema

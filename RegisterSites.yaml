@@ -1,0 +1,73 @@
+---
+- name: Register all sites in MSO
+  hosts: mso
+  connection: local
+  gather_facts: False
+  vars:
+    site_state: present
+  tasks:
+    - name: Add site one
+      cisco.mso.mso_site:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: no
+        use_proxy: no
+        use_ssl: yes
+        site: Fab1
+        apic_username: "{{ apic_username }}"
+        apic_password: "{{ apic_password }}"
+        apic_site_id: 100
+        urls:
+        - https://10.48.168.2
+        labels:
+        - Europe
+        - Diegem1
+        location:
+          latitude: 50.887318
+          longitude: 4.447084
+        state: "{{ site_state }}"
+
+    - name: Add site two
+      cisco.mso.mso_site:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: no
+        use_proxy: no
+        use_ssl: yes
+        site: Fab2
+        apic_username: "{{ apic_username }}"
+        apic_password: "{{ apic_password }}"
+        apic_site_id: 200
+        urls:
+        - https://10.48.168.3
+        labels:
+        - Europe
+        - Diegem2
+        location:
+          latitude: 51.887318
+          longitude: 5.447084
+        state: "{{ site_state }}"
+
+    - name: Add site three
+      cisco.mso.mso_site:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: no
+        use_proxy: no
+        use_ssl: yes
+        site: Fab3
+        apic_username: "{{ apic_username }}"
+        apic_password: "{{ apic_password }}"
+        apic_site_id: 300
+        urls:
+        - https://10.48.168.221
+        labels:
+        - Europe
+        - Diegem3
+        location:
+          latitude: 52.887318
+          longitude: 6.447084
+        state: "{{ site_state }}"

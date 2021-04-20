@@ -1,0 +1,340 @@
+---
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: mso
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Get Tenant ID for cpaggen-ansible-schema
+      mso_tenant:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        tenant: "cpaggen-ansible"
+        state: query
+      register: result_tenant
+
+    - debug:
+      #msg:  "{{ query_result.imdata[0].configSnapshot.attributes.name }}"
+        msg:  "{{ result_tenant.current.id }}"
+
+#     - name: Add New schema
+#       mso_schema:
+#         host: "{{ ansible_host }}"
+#         username: "{{ mso_username }}"
+#         password: "{{ mso_password }}"
+#         validate_certs: False
+#         schema: "cpaggen-ansible-schema"
+#         state: present
+#         templates:
+#         - name: "Template1"
+#           displayName: "My First Template"
+#           tenantId: "{{result_tenant.current.id}}"
+#       tags:
+#         addSchema
+
+    - name: Add schema
+      mso_schema_template:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        tenant: "cpaggen-ansible"
+        schema: "cpaggen-ansible-schema"
+        template: "Template1"
+        state: present 
+      tags:
+        addSchema
+
+    - name: Add vrf
+      mso_schema_template_vrf:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        vrf: "VRF1"
+      tags:
+        addVRF
+
+    - name: Add l3out
+      mso_schema_template_l3out:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        template: "Template1"
+        l3out: "L3out1"
+        vrf:
+         name: "VRF1"
+        state: present
+      tags:
+        l3out
+
+    - name: Add BDs to VRF1
+      mso_schema_template_bd:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        bd: "{{ item.bd }}"
+        intersite_bum_traffic: "yes"
+        layer2_stretch: "yes"
+        layer2_unknown_unicast: "proxy"
+        vrf:
+          name: "VRF1"
+      loop:
+        - { bd: "BD1" }
+        - { bd: "BD2" }
+      tags:
+        addBD
+
+    - name: Add subnet to BDs
+      mso_schema_template_bd_subnet:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        bd: "{{ item.bd }}"
+        subnet: "{{ item.subnet }}"
+        scope: "public"
+      loop:
+        - { bd: "BD1", subnet: "172.17.1.254/24" }
+        - { bd: "BD2", subnet: "172.17.2.254/24" }
+      tags:
+        BDSUB
+
+    - name: Add New anp
+      mso_schema_template_anp:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        anp: "{{item.anp}}"
+      loop:
+        - { anp: "App1_ANP" }
+        - { anp: "App2_ANP" }
+      tags:
+        addANP
+
+    - name: Add EPG to anp
+      mso_schema_template_anp_epg:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        anp: "{{ item.anp }}"
+        epg: "{{ item.epg }}"
+        bd:
+         name: "{{ item.bd }}"
+        vrf:
+         name: "{{ item.vrf }}"
+      loop:
+        - { anp: "App1_ANP", epg: "EPG1", bd: "BD1", vrf: "VRF1"}
+        - { anp: "App1_ANP", epg: "EPG2", bd: "BD1", vrf: "VRF1"}
+        - { anp: "App2_ANP", epg: "EPG1", bd: "BD2", vrf: "VRF1"}
+      tags:
+        addANP_EPG
+
+
+    - name: Add site to template
+      mso_schema_site:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        site: "{{ item.site }}"
+      loop:
+        - { site: "Fab1" }
+        - { site: "Fab2" }
+        - { site: "Fab3" }
+      tags:
+        SITE
+
+
+    - name: Add vrf to site
+      mso_schema_site_vrf:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        site: "Fab3"
+        vrf: "VRF1"
+      tags:
+        SITEVRF
+
+    - name: Add vrf to site
+      mso_schema_site_bd:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        site: "Fab3"
+        bd: "{{ item.bd }}"
+      loop:
+        - { bd: "BD1" }
+        - { bd: "BD2" }
+      tags:
+        SITEBD
+
+#    - name: Add subnet to BDs
+#      mso_schema_site_bd_subnet:
+#        host: "{{ ansible_host }}"
+#        mso_username: "{{ mso_username }}"
+#        mso_password: "{{ mso_password }}"
+#        validate_certs: False
+#        schema: "cpaggen-ansible-schema"
+#        state: present
+#        site: "Fab3"
+#        template: "Template1"
+#        bd: "{{ item.bd }}"
+#        subnet: "{{ item.subnet }}"
+#      loop:
+#        - { bd: "BD1", subnet: "172.17.1.254/24" }
+#        - { bd: "BD2", subnet: "172.17.2.254/24" }
+#      tags:
+#        SITEBD
+#
+#    - name: Add subnet to BDs
+#      mso_schema_site_bd_l3out:
+#        host: "{{ ansible_host }}"
+#        mso_username: "{{ mso_username }}"
+#        mso_password: "{{ mso_password }}"
+#        validate_certs: False
+#        schema: "cpaggen-ansible-schema"
+#        state: present
+#        site: "Fab3"
+#        template: "Template1"
+#        bd: "{{ item.bd }}"
+#        l3out: "L3out1"
+#      loop:
+#        - { bd: "BD1", subnet: "172.17.1.254/24" }
+#        - { bd: "BD2", subnet: "172.17.2.254/24" }
+#      tags:
+#        SITEBDL3
+
+    - name: Add anp to SITE1
+      mso_schema_site_anp:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        site: "Fab3"
+        anp: "{{ item.anp }}"
+      loop:
+        - { anp: "App1_ANP"}
+        - { anp: "App2_ANP"}
+      tags:
+        SITEANP
+
+    - name: Add epg to SITE1
+      mso_schema_site_anp_epg:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        site: "Fab3"
+        anp: "{{ item.anp }}"
+        epg: "{{ item.epg }}"
+      loop:
+        - { anp: "App1_ANP", epg: "EPG1"}
+        - { anp: "App1_ANP", epg: "EPG2"}
+        - { anp: "App2_ANP", epg: "EPG1"}
+      tags:
+        SITEEPG
+
+    - name: view site to template
+      mso_schema_site:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: query
+        template: "Template1"
+        site: "Fab3"
+      tags:
+        VIEW
+
+    - name: Add domain to SITE1
+      mso_schema_site_anp_epg_domain:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        state: present
+        template: "Template1"
+        site: "Fab3"
+        anp: "{{ item.anp }}"
+        epg: "{{ item.epg }}"
+        domain_association_type: "{{ item.typeDom }}"
+        domain_profile: "{{ item.profile }}"
+        deployment_immediacy: lazy
+        resolution_immediacy: pre-provision
+      loop:
+        - { anp: "App1_ANP", epg: "EPG1", typeDom: "vmmDomain", profile: "VMWARE-SITE1_VMM"}
+        - { anp: "App1_ANP", epg: "EPG2", typeDom: "vmmDomain", profile: "VMWARE-SITE1_VMM"}
+        - { anp: "App2_ANP", epg: "EPG1", typeDom: "vmmDomain", profile: "VMWARE-SITE1_VMM"}
+      tags:
+        SITEEPG
+
+    - name: Get deployment status
+      mso_schema_template_deploy:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        template: "Template1"
+        site: "Fab3"
+        state: deploy
+      tags:
+        Dep
+
+    - name: Get deployment status
+      mso_schema_template_deploy:
+        host: "{{ ansible_host }}"
+        username: "{{ mso_username }}"
+        password: "{{ mso_password }}"
+        validate_certs: False
+        schema: "cpaggen-ansible-schema"
+        template: "Template1"
+        state: status
+      register: status_result
+      tags:
+        DepStatus
+
+    - debug:
+        msg: "{{ status_result }}"
